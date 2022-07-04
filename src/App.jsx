@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styled from '@emotion/styled'
 import ImagenCripto from './img/imagen-criptos.png'
 import Formulario from './components/Formulario'
+import Resultado from './components/Resultado'
+import Spinner from './components/Spinner'
 
 const Contenedor = styled.div`
   max-width: 900px;
@@ -11,6 +13,7 @@ const Contenedor = styled.div`
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     column-gap: 2rem;
+    height: 95vh;
   }
 `
 const Imagen = styled.img`
@@ -18,6 +21,18 @@ const Imagen = styled.img`
   width: 80%;
   margin: 100px auto 0 auto;
   display: block;
+`
+const Copyright = styled.p`
+  display: block;
+  color: #fff;
+  margin: 0;
+  padding-bottom: 10px;
+  text-align: center;
+  @media (min-width: 992px) {
+    grid-column: 1 / 3;
+    
+  }
+
 `
 
 const Heading = styled.h1`
@@ -41,8 +56,28 @@ const Heading = styled.h1`
 
 function App() {
  
+  const [monedas, setMonedas] = useState({})
+  const [resultado, setResultado] = useState({})
+  const [cargando, setCargando] = useState(false)
+
+  useEffect(() => {
+    if(Object.keys(monedas).length > 0) {
+      const cotizarCripto = async () => {
+        setCargando(true)
+        setResultado({})
+        const {moneda, criptomoneda} = monedas
+        const url = `https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${criptomoneda}&tsyms=${moneda}`
+        const respuesta = await fetch(url)
+        const resultado = await respuesta.json()
+        setResultado(resultado.DISPLAY[criptomoneda][moneda])
+        setCargando(false)
+      }
+      cotizarCripto()
+    }
+  }, [monedas])
 
   return (
+   <>
     <Contenedor>
     <Imagen 
       src={ImagenCripto}
@@ -51,9 +86,21 @@ function App() {
     <div>
     <Heading>Cotiza Criptomonedas al Instante</Heading>
 
-    <Formulario />
+    <Formulario 
+    setMonedas={setMonedas}
+    
+    />
+    {cargando && <Spinner />}
+    {resultado.PRICE && <Resultado
+    resultado={resultado}
+    />}
     </div>
+    
+      
     </Contenedor>
+    <Copyright>© 2022 Copyright | Ivan Sanchez</Copyright>
+    </>
+    
   )
 }
 
